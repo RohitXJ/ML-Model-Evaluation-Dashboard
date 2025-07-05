@@ -2,27 +2,43 @@ import pandas as pd
 from preprocessing import prep_data
 from pipeline import design_pipeline
 
-print("Hi there, Welcome to ML Model Evaluation Tool!")
-print("This tool will help you evaluate your tabular dataset using various metrics and Classifier ML models.")
-print("Please follow the instructions to get started")
-file_path = input("Enter the path to your dataset (CSV file): ")
-target_column = input("Enter the target column name (the column you want to predict): ")
-print("Which models do you want to compare? (separate by comma)\n1. Logistic Regression\n2. Random Forest\n3. SVM\n4. Naive Bayes\n5. Gradient Boosting")
-choices = list(map(int,input().split(',')))
-try:
-    # Load the dataset
-    data = pd.read_csv(file_path)
-    
-    # Validate if target column exists
-    if target_column not in data.columns:
-        raise ValueError(f"Target column '{target_column}' does not exist in the dataset.")
-    
-    print("Dataset loaded successfully!")
-    
-except FileNotFoundError:
-    print(f"Error: The file '{file_path}' was not found. Please check the path and try again.")
+def main():
+    print("Welcome to the ML Model Evaluation Tool.")
+    print("This tool will help you evaluate your dataset using various ML classifiers.")
+    print("Follow the prompts to get started.\n")
 
-print("Holding on, I am processing your request...")
+    file_path = input("Enter the path to your dataset (CSV file): ").strip()
+    target_column = input("Enter the target column name (the column to predict): ").strip()
 
-X,y = prep_data(data, target_column)
-design_pipeline(X,y,choices)
+    print("\nSelect the models you want to evaluate (comma-separated):")
+    print("1. Logistic Regression")
+    print("2. Random Forest")
+    print("3. SVM")
+    print("4. Naive Bayes")
+    print("5. Gradient Boosting")
+
+    try:
+        choices = list(map(int, input("Enter model numbers (e.g. 1,3,5): ").split(',')))
+        valid_choices = [i for i in choices if i in [1, 2, 3, 4, 5]]
+        if not valid_choices:
+            raise ValueError("No valid model numbers selected.")
+
+        data = pd.read_csv(file_path)
+        if target_column not in data.columns:
+            raise ValueError(f"Target column '{target_column}' not found in the dataset.")
+
+        print("Dataset loaded successfully.")
+        print("Processing the data and preparing models...")
+
+        X, y = prep_data(data, target_column)
+        design_pipeline(X, y, valid_choices)
+
+    except FileNotFoundError:
+        print(f"Error: File '{file_path}' not found. Please check the path and try again.")
+    except ValueError as ve:
+        print(f"Error: {ve}")
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+
+if __name__ == "__main__":
+    main()
