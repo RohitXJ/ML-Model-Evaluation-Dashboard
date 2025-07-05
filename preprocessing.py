@@ -1,91 +1,135 @@
-import shap
-from sklearn.svm import SVC
 import pandas as pd
-from sklearn.model_selection import train_test_split
+import numpy as np
 from sklearn.preprocessing import StandardScaler, LabelEncoder
-from imblearn.over_sampling import SMOTENC
+from sklearn.linear_model import LogisticRegression
 from sklearn.decomposition import PCA
+from sklearn.feature_selection import VarianceThreshold
+from sklearn.model_selection import StratifiedShuffleSplit
+from imblearn.over_sampling import SMOTE,SMOTENC,RandomOverSampler
+from evaluation.plot import imp_plot
 
-def prep_data(data, target_column):
-    """
-    Prepares the dataset for model training and evaluation.
-    
-    Parameters:
-    data (pd.DataFrame): The input dataset.
-    target_column (str): The name of the target column to predict.
-    
-    Returns:
-    X and y (pd.DataFrame, pd.DataFrame): Processed features and target variable.
-    """
-    total_col = len(data.columns.tolist())
+def prep_data(data, target_column, columns_to_drop=None):
+    total_rows, _ = data.shape
     X = data.drop(columns=[target_column])
     y = data[target_column]
-    
+
+    # Manual column drop (external input)
+    if columns_to_drop:
+        for col in columns_to_drop:
+            if col in X.columns:
+                print(f"Dropping column as specified: {col}")
+                X.drop(columns=[col], inplace=True)
+
+    # Drop non-informative columns based on keywords
+    keywords = ["id", "name", "serial", "timestamp", "date", "uuid"]
+    for col in X.columns:
+        if any(key in col.lower() for key in keywords):
+            print(f"Dropping non-informative column: {col}")
+            X.drop(columns=[col], inplace=True)
+
+    # Drop high-missing columns
+    for col in X.columns:
+        if X[col].isnull().sum() > 0.3 * total_rows:
+            print(f"Dropping column with high missing values: {col}")
+            X.drop(columns=[col], inplace=True)
+
     num_col = X.select_dtypes(include=['int', 'float']).columns.tolist()
     obj_col = X.select_dtypes(include=['object']).columns.tolist()
 
-    # Encoding categorical features
+    # Encode categorical
     for col in obj_col:
         if X[col].isnull().any():
             X[col] = X[col].fillna(X[col].mode()[0])
-        
         le = LabelEncoder()
         X[col] = le.fit_transform(X[col])
 
-    # Scaling numerical features
+    # Scale numerical
     for col in num_col:
         if X[col].isnull().any():
             X[col] = X[col].fillna(X[col].mean())
-        
         scaler = StandardScaler()
         X[col] = scaler.fit_transform(X[[col]])
 
-    # Applying SMOTENC for imbalanced datasets
+    # Estimate feature importance
+    print("Estimating feature importance from balanced sample...")
+    sss = StratifiedShuffleSplit(n_splits=1, test_size=min(0.3, 500 / len(X)), random_state=42)
+    for train_idx, _ in sss.split(X, y):
+        sample_X = X.iloc[train_idx].copy()
+        sample_y = y.iloc[train_idx].copy()
+
+    model = LogisticRegression(max_iter=1000, solver='liblinear')
+    model.fit(sample_X, sample_y)
+
+    importances = np.abs(model.coef_[0])
+    sorted_idx = np.argsort(importances)[::-1]
+    sorted_cols = sample_X.columns[sorted_idx]
+    sorted_scores = importances[sorted_idx]
+
+    imp_plot(sorted_cols, sorted_scores)
+
+    # Get user input
+    top_n_features = input("Select number of features to keep based on importance scores,\nor enter 'auto' for automatic selection:\n")
+
+    # Feature selection logic
+    if top_n_features.isdigit():
+        top_n_features = int(top_n_features)
+        X = X[sorted_cols[:top_n_features]]
+        print(f"Using top {top_n_features} user-selected features.")
+    elif top_n_features.strip().lower() == 'auto':
+        diffs = np.diff(sorted_scores)
+        elbow = np.argmax(diffs < 0.01) + 1
+        X = X[sorted_cols[:elbow]]
+        print(f"'Auto' selected top {elbow} features using elbow method.")
+    else:
+        print("Invalid input. No feature filtering applied.")
+
+    # Drop low variance features
+    selector = VarianceThreshold(threshold=0.01)
+    X = pd.DataFrame(selector.fit_transform(X), columns=X.columns[selector.get_support()])
+
+    # --- Imbalance handling ---
     balance = y.value_counts(normalize=True) * 100
     max_pct = balance.max()
-    if any(abs(max_pct - pct) > 7 for pct in balance):
-        print("Dataset is imbalanced, applying SMOTENC...")
-        smote = SMOTENC(
-            categorical_features=obj_col,
-            sampling_strategy='auto',
-            random_state=42,
-        )
-        X, y = smote.fit_resample(X, y)
-        X = pd.DataFrame(X, columns=X.columns)
-        y = pd.DataFrame(y, columns=[target_column])
 
-    # Applying PCA if the number of features is greater than 10
-    if total_col > 6:
+    if any(abs(max_pct - pct) > 7 for pct in balance):
+        print("Dataset is imbalanced.")
+
+        # Get categorical column indices based on pre-encoding list
+        categorical_indices = [X.columns.get_loc(col) for col in obj_col if col in X.columns]
+        num_features = X.shape[1] - len(categorical_indices)
+
+        if len(categorical_indices) == X.shape[1]:
+            print("Only categorical features found — applying RandomOverSampler.")
+            ros = RandomOverSampler(random_state=42)
+            X, y = ros.fit_resample(X, y)
+
+        elif num_features == X.shape[1]:
+            print("Only numerical features found — applying SMOTE.")
+            smote = SMOTE(random_state=42, sampling_strategy='auto')
+            X, y = smote.fit_resample(X, y)
+
+        else:
+            print("Mixed features — applying SMOTENC.")
+            smote_nc = SMOTENC(
+                categorical_features=categorical_indices,
+                sampling_strategy='auto',
+                random_state=42
+            )
+            X, y = smote_nc.fit_resample(X, y)
+
+        X = pd.DataFrame(X, columns=X.columns)
+        y = pd.Series(y).reset_index(drop=True)
+
+    # Final PCA fallback
+    if X.shape[1] > 20:
         print("Applying PCA for dimensionality reduction...")
-        pca  = PCA(n_components=0.92)
+        pca = PCA(n_components=0.92)
         X = pca.fit_transform(X)
         X = pd.DataFrame(X)
-    # Extracting top 5 features using SHAP if the number of features is still large
-    if total_col > 7 and X.shape[1] > 5:
-        print("Using SHAP (KernelExplainer + SVM) to extract 5 most important features...")
 
-        sample_X = X.sample(n=min(300, len(X)), random_state=42)
-        sample_y = y.loc[sample_X.index]
+    print("✅ Preprocessing complete.")
+    return X, y
 
-        model = SVC(kernel='rbf', probability=True)
-        model.fit(sample_X, sample_y)
-
-        # SHAP with KernelExplainer — use a background sample
-        explainer = shap.KernelExplainer(model.predict_proba, shap.kmeans(sample_X, 10))
-        shap_values = explainer.shap_values(sample_X, nsamples=100)  # fast approx
-
-        # For binary classification, use class 1's SHAP
-        shap_df = pd.DataFrame(shap_values[1], columns=[f"F{i}" for i in range(sample_X.shape[1])])
-        mean_abs_shap = shap_df.abs().mean().sort_values(ascending=False)
-
-        top5_indices = mean_abs_shap.head(5).index.tolist()
-
-        X = sample_X[top5_indices].copy().reset_index(drop=True)
-        y = sample_y.reset_index(drop=True)
-        print("Reduced dataset to top 5 SHAP-ranked features.")
-    print("Data set preprocessing complete.")
-
-    return X, y # End of prep_data function and returning processed features and target variable
 
 
 

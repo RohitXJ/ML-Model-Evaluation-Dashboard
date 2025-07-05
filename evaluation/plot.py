@@ -24,3 +24,11 @@ def plotting(y_test, y_pred, name):
 
     plt.tight_layout()
     plt.show()
+
+def imp_plot(columns, scores):
+    plt.figure(figsize=(10, 5))
+    plt.barh(columns[::-1], scores[::-1], color="teal")
+    plt.xlabel("Importance Score")
+    plt.title("Feature Importance")
+    plt.tight_layout()
+    plt.show()
