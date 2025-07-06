@@ -28,9 +28,10 @@ def main():
             raise ValueError(f"Target column '{target_column}' not found in the dataset.")
 
         print("Dataset loaded successfully.")
+        columns_to_drop = input("Enter any columns to drop (comma-separated, or leave blank to skip): ").strip()
         print("Processing the data and preparing models...")
 
-        X, y = prep_data(data, target_column)
+        X, y = prep_data(data, target_column, columns_to_drop.split(',') if columns_to_drop else None)
         design_pipeline(X, y, valid_choices)
 
     except FileNotFoundError:
