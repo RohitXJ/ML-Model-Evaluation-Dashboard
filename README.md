@@ -29,7 +29,7 @@ A modular and easy-to-use machine learning model evaluation tool with both **Str
 1. Clone this repo
 
    ```bash
-   git clone https://github.com/yourusername/ML-Model-Evaluation-Dashboard-Scripted.git
+   git clone https://github.com/RohitXJ/ML-Model-Evaluation-Dashboard-Scripted.git
    cd ML-Model-Evaluation-Dashboard-Scripted
    ```
 
@@ -69,23 +69,31 @@ You can also run the same logic directly in the terminal:
 
 ### ▶️ Steps:
 
-1. In root directory:
+1. Clone this repo
 
    ```bash
-   python terminal_runner.py --data sample_data.csv --target target_column_name
+   git clone https://github.com/RohitXJ/ML-Model-Evaluation-Dashboard-Scripted.git
+   cd ML-Model-Evaluation-Dashboard-Scripted
    ```
 
-### 🔧 Optional arguments:
+2. Create a virtual environment (recommended)
 
-* `--drop col1 col2` – Specify columns to drop
-* `--top_n 5` – Use top 5 features (manual selection)
-* `--elbow` – Use auto elbow method for feature selection
+   ```bash
+   python -m venv venv
+   source venv/bin/activate   # On Windows: venv\Scripts\activate
+   ```
 
-### ✅ Example:
+3. Install required packages
 
-```bash
-python terminal_runner.py --data data.csv --target Outcome --drop Age Gender --elbow
-```
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. Run the script
+
+   ```bash
+   python main.py
+   ```
 
 ---
 
@@ -110,7 +118,7 @@ pip install -r requirements.txt
 
 ## 📸 Screenshots
 
-![Dashboard Screenshot](images/dashboard.png) 
+![Dashboard Screenshot](images/dashboard.png) <!-- Replace with actual image path -->
 
 ---
 
@@ -120,7 +128,7 @@ pip install -r requirements.txt
 B.Tech CSE (AI & ML) | Brainware University
 LinkedIn: [@rohit-gomes](https://www.linkedin.com/in/rohit-gomes-12209620a)
 Email: [gomesrohit92@gmail.com](mailto:gomesrohit92@gmail.com)
-GitHub: [@RohitXJ](https://github.com/RJxGAMERx)
+GitHub: [@RohitXJ](https://github.com/RohitXJ)
 
 ---
 
