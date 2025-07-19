@@ -110,7 +110,7 @@ pip install -r requirements.txt
 
 ## 📸 Screenshots
 
-![Dashboard Screenshot](images/dashboard.jpg) 
+![Dashboard Screenshot](images/dashboard.png) 
 
 ---
 
