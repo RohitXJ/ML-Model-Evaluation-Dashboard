@@ -1,120 +1,135 @@
-# 🧠 AI Engineer Level 2 — Project D
-## 📊 ML Model Evaluation Dashboard (Scripted)
+# ML-Model-Evaluation-Dashboard-Scripted
 
-An interactive, modular Python script that:
-- Loads a CSV dataset via user input
-- Lets users select ML models to compare
-- Automatically builds pipelines per model
-- Cross-validates and compares metrics (accuracy, precision, recall, F1, ROC AUC)
-- Shows + optionally saves plots and summary
+A modular and easy-to-use machine learning model evaluation tool with both **Streamlit UI** and **command-line interface (CLI)** support. The goal is to allow fast and flexible experimentation on tabular datasets for classification tasks — especially to understand how feature selection (including PCA) impacts model performance.
 
 ---
 
-## ✅ TODO LIST — BUILDING CHECKPOINTS
-Use this list to track your implementation step-by-step. Each block can be completed/tested independently.
+## 🚀 Features
+
+* Upload any tabular CSV dataset
+* Select target column and drop irrelevant columns
+* Automatically apply PCA if high dimensionality is detected
+* Perform feature selection:
+
+  * Elbow method (auto)
+  * Manual top-N features
+* Evaluate using Logistic Regression
+* Get precision, recall, F1-score, and support metrics
+* Works both via:
+
+  * 📊 Streamlit UI
+  * 🔧 Command-line script
 
 ---
 
-### 🔹 STEP 0: Project Folder Structure
-```
-model_evaluator/
-├── main.py                # main script with all user I/O logic
-├── models.py              # contains available model definitions
-├── preprocessing.py       # function to build data preprocessor
-├── evaluator.py           # handles cross-validation and metric computation
-├── plotter.py             # all visualizations (bar, ROC, confusion)
-└── utils.py               # helpers (e.g. user input menu)
-```
-☐ Create folder and empty files as above.
+## 💻 Streamlit UI: How to Run
+
+### ▶️ Steps:
+
+1. Clone this repo
+
+   ```bash
+   git clone https://github.com/yourusername/ML-Model-Evaluation-Dashboard-Scripted.git
+   cd ML-Model-Evaluation-Dashboard-Scripted
+   ```
+
+2. Create a virtual environment (recommended)
+
+   ```bash
+   python -m venv venv
+   source venv/bin/activate   # On Windows: venv\Scripts\activate
+   ```
+
+3. Install required packages
+
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. Run the Streamlit app
+
+   ```bash
+   cd streamlit_app_version
+   streamlit run streamlit_app.py
+   ```
+
+### 🧪 Then:
+
+* Upload your CSV file.
+* Choose the target column to predict.
+* Optionally drop any irrelevant columns.
+* Select feature selection method.
+* Click **Proceed** to get model evaluation results!
 
 ---
 
-### 🔹 STEP 1: User Input Interface (in `main.py`)
-- [X] Prompt for CSV file path
-- [X] Prompt for target column name
-- [X] Load the dataset with pandas
-- [X] Validate if target column exists
-- [X] Prompt for model selection (from numbered list)
-- [X] Store selected model keys
+## 💻 Terminal Version: How to Run
 
----
+You can also run the same logic directly in the terminal:
 
-### 🔹 STEP 2: Preprocessing (in `preprocessing.py`)
-- [X] Detect numerical and categorical columns
-- [X] Build `ColumnTransformer` with:
-  - SimpleImputer(median) + StandardScaler for numeric
-  - SimpleImputer(mode) + OneHotEncoder for categorical
-- [X] Return the complete preprocessor pipeline
+### ▶️ Steps:
 
----
+1. In root directory:
 
-### 🔹 STEP 3: Available Models (in `models.py`)
-- [ ] Define `get_available_models()` returning a dict like:
-```python
-{
-  "1": ("Logistic Regression", LogisticRegression(...)),
-  "2": ("Random Forest", RandomForestClassifier(...)),
-  "3": ("SVM", SVC(...)),
-  ...
-}
-```
-- [ ] Consider reasonable defaults (max_iter, n_estimators=100, etc.)
-- [ ] Use `n_jobs=-1` wherever possible
+   ```bash
+   python terminal_runner.py --data sample_data.csv --target target_column_name
+   ```
 
----
+### 🔧 Optional arguments:
 
-### 🔹 STEP 4: Build Dynamic Pipelines (in `main.py`)
-- [ ] Using selected model keys, build pipelines with:
-```python
-Pipeline([
-  ("preprocess", preprocessor),
-  ("model", selected_model_object)
-])
-```
-- [ ] Store as: `model_name -> pipeline`
+* `--drop col1 col2` – Specify columns to drop
+* `--top_n 5` – Use top 5 features (manual selection)
+* `--elbow` – Use auto elbow method for feature selection
 
----
+### ✅ Example:
 
-### 🔹 STEP 5: Evaluation Logic (in `evaluator.py`)
-- [ ] Accept model pipelines and training data
-- [ ] For each model, perform StratifiedKFold cross-validation
-- [ ] Compute mean of: accuracy, precision, recall, F1, ROC AUC
-- [ ] Return summary as a pandas DataFrame
-
----
-
-### 🔹 STEP 6: Plotting (in `plotter.py`)
-- [ ] Bar plot for any selected metric (e.g. accuracy)
-- [ ] Combined ROC Curve
-- [ ] Confusion Matrix (for top model or each model)
-- [ ] Use matplotlib / seaborn
-
----
-
-### 🔹 STEP 7: Final Integration (in `main.py`)
-- [ ] Perform train/test split
-- [ ] Build pipelines
-- [ ] Evaluate models
-- [ ] Display table
-- [ ] Ask user: save CSV + plots?
-- [ ] Save if yes into `./output` folder
-
----
-
-### 🔹 BONUS (Optional Extensions)
-- [ ] Add GridSearchCV for optional tuning
-- [ ] Auto-downsample if dataset > 10k rows
-- [ ] Allow exclusion of low-importance features
-- [ ] Export entire session result as HTML report
-
----
-
-## ✅ HOW TO RUN (later)
 ```bash
-python main.py
+python terminal_runner.py --data data.csv --target Outcome --drop Age Gender --elbow
 ```
 
 ---
 
-Stay consistent. Each script file should do one thing well. Ask me anytime if you get stuck on a step — we’ll code it together 💻🚀
+## 📦 Requirements
 
+Install with:
+
+```bash
+pip install -r requirements.txt
+```
+
+**Key libraries used:**
+
+* `pandas`
+* `numpy`
+* `scikit-learn`
+* `matplotlib`
+* `seaborn`
+* `streamlit`
+
+---
+
+## 📸 Screenshots
+
+![Dashboard Screenshot](images/dashboard.jpg) 
+
+---
+
+## 👥 Author & Contact
+
+**Rohit Gomes**
+B.Tech CSE (AI & ML) | Brainware University
+LinkedIn: [@rohit-gomes](https://www.linkedin.com/in/rohit-gomes-12209620a)
+Email: [gomesrohit92@gmail.com](mailto:gomesrohit92@gmail.com)
+GitHub: [@RohitXJ](https://github.com/RJxGAMERx)
+
+---
+
+## 🙌 Contributions
+
+Pull requests are welcome. For major changes, please open an issue first to discuss your ideas.
+
+---
+
+## 📝 License
+
+MIT License
